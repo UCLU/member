@@ -59,6 +59,58 @@ function student_entity_info() {
 }
 
 /**
+ * Implements hook_menu().
+ */
+function student_menu() {
+
+  $items = array();
+
+  $items['admin/config/students'] = array(
+    'title' => 'Students',
+    'description' => 'Administer students.',
+    'page callback' => 'system_admin_menu_block_page',
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+    'access arguments' => array('administer students'),
+  );
+
+  $items['admin/config/students/list'] = array(
+    'title' => 'Student list',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('student_list_form'),
+    'access arguments' => array('administer students'),
+    'file' => 'student.admin.inc',
+    'description' => 'View, edit, and add new students.',
+    'weight' => -10,
+  );
+
+  foreach (student_types() as $machine_name => $type) {
+    $items['admin/config/students/list/add/' . $machine_name] = array(
+      'title' => 'Add new ' . $type['name'],
+      'title callback' => 'check_plain',
+      'page callback' => 'student_page_add',
+      'page arguments' => array(4),
+      'access arguments' => array('administer students'),
+      'file' => 'student.admin.inc',
+      'description' => empty($type['description'])? '' : $type['description'],
+      'type' => MENU_LOCAL_ACTION,
+    );
+    $items['admin/config/students/' . $machine_name] = array(
+      'title' => drupal_ucfirst($type['name']) . ' settings',
+      'title callback' => 'check_plain',
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('administer students'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+      'description' => empty($type['description'])? '' : $type['description'],
+    );
+  }
+
+  return $items;
+
+}
+
+/**
  * Return information about student types in a structured array, keyed by
  * each type's machine name. Each element is also a structured array defining at
  * least 'name'.
@@ -71,10 +123,6 @@ function student_types() {
   $types = &drupal_static(__FUNCTION__);
   if (empty($types)) {
     $types = array();
-    $types['default'] = array(
-      'name' => t('Student (default)'),
-      'description' => t('A generic student.'),
-    );
     $types += module_invoke_all('student_type_info');
   }
   return $types;
