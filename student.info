@@ -2,4 +2,10 @@ name = Student
 description = "Provides a fieldable Student entity."
 core = 7.x
 dependencies[] = entity
+
+; Files necessary for this module.
 files[] = includes/student.controller.inc
+files[] = includes/student.admin.inc
+
+; Integrations with other modules.
+files[] = integrations/migrate/migrate-destination-student.inc

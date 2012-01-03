@@ -55,7 +55,7 @@ function student_schema() {
       'created' => array('created'),
     ),
     'unique keys' => array(
-      'uuid' => 'uuid',
+      'uuid' => array('uuid'),
     ),
   );
 
