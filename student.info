@@ -1,0 +1,4 @@
+name = Student
+description = "Provides a fieldable Student entity."
+core = 7.x
+dependencies[] = entity

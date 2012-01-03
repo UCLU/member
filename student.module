@@ -1,0 +1,152 @@
+<?php
+/*
+ * @file
+ * Main module file for Student.
+ */
+
+/*
+ * Implements hook_entity_info().
+ */
+function student_entity_info() {
+
+  $entities = array();
+
+  $entities['student'] = array(
+    'label' => t('Student'),
+    'access callback' => 'student_access',
+    'uri callback' => 'student_uri',
+    'controller class' => 'StudentController',
+    'base table' => 'student',
+    'label callback' => 'student_label',
+    'entity keys' => array(
+      'id' => 'student_id',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'static cache' => TRUE,
+    'fieldable' => TRUE,
+    'module' => 'student',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full content'),
+        'custom settings' => TRUE,
+      ),
+      'teaser' => array(
+        'label' => t('Teaser'),
+        'custom settings' => TRUE,
+      ),
+    ),
+    'redirect' => FALSE, // Redirect module
+  );
+
+  return $entities;
+
+}
+
+/**
+ * Implements entity_uri(). URI callback for a single student. See:
+ * http://api.drupal.org/api/drupal/includes--common.inc/function/entity_uri/7.
+ *
+ * @param stdClass $entity
+ *
+ * @return array
+ */
+function student_uri(stdClass $student) {
+  $path = 'student/' . $student->student_id;
+  return array(
+    'path' => $path,
+  );
+}
+
+/**
+ * Determines whether the given user has access to a Student.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $student
+ *   Optionally a student o check access for. If nothing is given, access for
+ *   all students is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function student_access($op, $student = NULL, $account = NULL) {
+  switch ($op) {
+    case 'view':
+      return (bool) user_access('view student', $account);
+      break;
+    case 'create':
+      return (bool) user_access('create student', $account);
+      break;
+    case 'update':
+    case 'edit':
+      return (bool) user_access('edit student', $account);
+      break;
+    case 'delete':
+      return (bool) user_access('delete student', $account);
+      break;
+  }
+  return FALSE;
+}
+
+/**
+ * Wrapper function to allow deleting multiple students.
+ *
+ * @param array $student_ids
+ *   Array of student IDs.
+ * @return bool
+ */
+function student_delete_multiple(array $student_ids) {
+  return entity_get_controller('student')->delete($student_ids);
+}
+
+/**
+ * Wrapper function to allow deleting an individual student.
+ *
+ * @see student_delete_multiple()
+ *
+ * @param mixed $student_id
+ *   Single student ID.
+ * @return bool
+ */
+function student_delete($student_id) {
+  return student_delete_multiple(array($student_id));
+}
+
+/**
+ * Wrapper function to allow saving a student.
+ *
+ * @param stdClass $student
+ *   student object.
+ * @return bool
+ */
+function student_save(stdClass $student) {
+  return entity_get_controller('student')->save($student);
+}
+
+/*
+ * Student entity label callback.
+ *
+ * Note that for Drupal 8 the parameter order for label callbacks will be
+ * reversed.
+ *
+ * @param stdClass $entity
+ */
+function student_label(stdClass $entity, $entity_type) {
+
+  if ($entity_type != 'student') {
+    return FALSE;
+  }
+
+  if (!empty($entity->uid) && $account = user_load($entity->uid)) {
+    return t('Student @username (#@id)', array('@username' => $account->name, '@id' => $entity->student_id));
+  }
+
+  return t('Student #@id', array('@id' => $entity->student_id));
+
+}
