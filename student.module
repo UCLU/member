@@ -42,8 +42,71 @@ function student_entity_info() {
     'redirect' => FALSE, // Redirect module
   );
 
+  foreach (student_types() as $machine_name => $type) {
+    $entities['student']['bundles'][$machine_name] = array(
+      'label' => drupal_ucfirst($type['name']),
+      'admin' => array(
+        'path' => 'admin/config/students/' . $machine_name,
+        'real path' => 'admin/config/students/' . $machine_name,
+        'bundle argument' => 3,
+        'access arguments' => array('administer students'),
+      ),
+    );
+  }
+
   return $entities;
 
+}
+
+/**
+ * Return information about student types in a structured array, keyed by
+ * each type's machine name. Each element is also a structured array defining at
+ * least 'name'.
+ *
+ * This uses hook_student_type_info() to allow other modules to define types.
+ *
+ * @return array
+ */
+function student_types() {
+  $types = &drupal_static(__FUNCTION__);
+  if (empty($types)) {
+    $types = array();
+    $types['default'] = array(
+      'name' => t('Student (default)'),
+      'description' => t('A generic student.'),
+    );
+    $types += module_invoke_all('student_type_info');
+  }
+  return $types;
+}
+
+/**
+ * Implements hook_permission().
+ *
+ * @return array
+ */
+function student_permission() {
+  $permissions = array(
+    'administer students' => array(
+      'title' => t('Administer students'),
+      'description' => t('Alter the fields and display settings for student types.'),
+    ),
+    'create student' => array(
+      'title' => t('Create any students'),
+    ),
+    'delete student' => array(
+      'title' => t('Delete any students'),
+      'description' => t('This permission is dangerous: deleting an student automatically deletes ALL associated data.'),
+      'restrict access' => TRUE,
+    ),
+    'edit student' => array(
+      'title' => t('Edit any student'),
+    ),
+    'view student' => array(
+      'title' => t('View any student'),
+    ),
+  );
+  return $permissions;
 }
 
 /**
