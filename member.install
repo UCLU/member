@@ -1,0 +1,86 @@
+<?php
+/**
+ * @file
+ *   Install functions for the Member module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function member_schema() {
+
+  $schema = array();
+
+  $schema['member'] = array(
+    'description' => 'The main table for the Member module.',
+    'fields' => array(
+      'member_id' => array(
+        'description' => 'Primary key: identifier for a member.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'status' => array(
+        'description' => 'Membership status.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'type' => array(
+        'description' => 'The type of member (machine name).',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+      ),
+      'uid' => array(
+        'description' => 'The Drupal user ID of the member: relates to {user}.uid.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+      'uuid' => array(
+        'description' => 'The UUID of the member (for matching against external systems).',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp for when the member was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp for when the member was most recently changed.',
+        'type' => 'int',
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('member_id'),
+    'indexes' => array(
+      'type' => array('type'),
+      'created' => array('created'),
+      'status' => array('status'),
+    ),
+    'unique keys' => array(
+      'uuid' => array('uuid'),
+    ),
+  );
+
+  return $schema;
+
+}
+
+/**
+ * Add status field.
+ */
+function member_update_7001() {
+  $schema = member_schema();
+  $spec = $schema['member']['fields']['status'];
+  $keys_new = array(
+    'indexes' => array(
+      'status' => array('status'),
+    ),
+  );
+  db_add_field('member', 'status', $spec, $keys_new);
+}

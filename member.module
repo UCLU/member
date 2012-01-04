@@ -1,0 +1,587 @@
+<?php
+/*
+ * @file
+ * Main module file for Member.
+ */
+
+/*
+ * Implements hook_entity_info().
+ */
+function member_entity_info() {
+
+  $entities = array();
+
+  $entities['member'] = array(
+    'label' => t('Member'),
+    'access callback' => 'member_access',
+    'uri callback' => 'member_uri',
+    'controller class' => 'MemberController',
+    'base table' => 'member',
+    'label callback' => 'member_label',
+    'entity keys' => array(
+      'id' => 'member_id',
+      'bundle' => 'type',
+    ),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'bundles' => array(),
+    'static cache' => TRUE,
+    'fieldable' => TRUE,
+    'module' => 'member',
+    'view modes' => array(
+      'full' => array(
+        'label' => t('Full content'),
+        'custom settings' => TRUE,
+      ),
+      'teaser' => array(
+        'label' => t('Teaser'),
+        'custom settings' => TRUE,
+      ),
+    ),
+    'redirect' => FALSE, // Redirect module
+  );
+
+  foreach (member_types() as $machine_name => $type) {
+    $entities['member']['bundles'][$machine_name] = array(
+      'label' => drupal_ucfirst($type['name']),
+      'admin' => array(
+        'path' => 'admin/config/members/' . $machine_name,
+        'real path' => 'admin/config/members/' . $machine_name,
+        'bundle argument' => 3,
+        'access arguments' => array('administer members'),
+      ),
+      'redirect' => FALSE, // Redirect module
+    );
+  }
+
+  return $entities;
+
+}
+
+/*
+ * Implements hook_entity_property_info().
+ *
+ * See http://drupalcontrib.org/api/drupal/contributions--entity--entity.api.php/function/hook_entity_property_info/7
+ *
+ * Not in use yet.
+ */
+function member_entity_property_info() {
+  $info = array();
+  $properties = &$info['member']['properties'];
+  $properties['member_id'] = array(
+    'label' => t('Member ID'),
+    'type' => 'integer',
+    'description' => t('The unique ID of the member entity.'),
+    'schema field' => 'member_id',
+  );
+  $properties['type'] = array(
+    'label' => t('Type'),
+    'type' => 'token',
+    'description' => t('The type of member (machine-readable name).'),
+    'required' => TRUE,
+    'schema field' => 'type',
+  );
+  $properties['uid'] = array(
+    'label' => t('User ID'),
+    'type' => 'integer',
+    'description' => t('The Drupal user ID associated with the member.'),
+    'validation callback' => 'member_validate_uid',
+    'schema field' => 'uid',
+  );
+  $properties['uuid'] = array(
+    'label' => t('UUID'),
+    'type' => 'text',
+    'description' => t('The universally unique identifier of the member.'),
+    'schema field' => 'uuid',
+  );
+  $properties['created'] = array(
+    'label' => t('Created date'),
+    'type' => 'date',
+    'description' => t('The date and time when the member entity was created.'),
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t('Changed date'),
+    'type' => 'date',
+    'description' => t('The date and time when the member entity was last modified.'),
+    'schema field' => 'changed',
+  );
+  return $properties;
+}
+
+/*
+ * Validation callback for the member property 'uid'.
+ *
+ * @see member_entity_property_info()
+ */
+function member_validate_uid($uid) {
+  if (is_numeric($uid) && $account = user_load($uid)) {
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function member_menu() {
+
+  $items = array();
+
+  $items['admin/config/members'] = array(
+    'title' => 'Members',
+    'description' => 'Administer members.',
+    'page callback' => 'system_admin_menu_block_page',
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+    'access arguments' => array('administer members'),
+  );
+
+  $items['admin/config/members/list'] = array(
+    'title' => 'Member list',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('member_list_form'),
+    'access arguments' => array('administer members'),
+    'file' => 'member.admin.inc',
+    'description' => 'View, edit, and add new members.',
+    'weight' => -10,
+  );
+
+  foreach (member_types() as $machine_name => $type) {
+    $items['admin/config/members/list/add/' . $machine_name] = array(
+      'title' => 'Add new ' . $type['name'],
+      'title callback' => 'check_plain',
+      'page callback' => 'member_page_add',
+      'page arguments' => array(5),
+      'access arguments' => array('administer members'),
+      'file' => 'member.admin.inc',
+      'description' => empty($type['description'])? '' : $type['description'],
+      'type' => MENU_LOCAL_ACTION,
+    );
+    $items['admin/config/members/' . $machine_name] = array(
+      'title' => drupal_ucfirst($type['name']) . ' settings',
+      'title callback' => 'check_plain',
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('administer members'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+      'description' => empty($type['description'])? '' : $type['description'],
+    );
+  }
+
+  $items['member/%member'] = array(
+    'title callback' => 'member_page_title',
+    'title arguments' => array(1),
+    'page callback' => 'member_page_view',
+    'page arguments' => array(1),
+    'access callback' => 'member_access',
+    'access arguments' => array('view', 2),
+    'file' => 'member.pages.inc',
+  );
+
+  $items['member/%member/view'] = array(
+    'title' => 'View',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  $items['member/%member/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'member_page_edit',
+    'file' => 'member.admin.inc',
+    'page arguments' => array(1),
+    'access callback' => 'member_access',
+    'access arguments' => array('update', 1),
+    'weight' => 1,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+  );
+
+  $items['member/%member/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('member_form_delete_confirm', 1),
+    'access callback' => 'member_access',
+    'access arguments' => array('delete', 1),
+    'file' => 'member.admin.inc',
+    'weight' => 2,
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_INLINE,
+  );
+
+  return $items;
+
+}
+
+/**
+ * Implements hook_field_extra_fields
+ */
+function member_field_extra_fields() {
+  $fields = array('member' => array());
+  foreach (member_types() as $machine_name => $type) {
+    $fields['member'][$machine_name]['form'] = array(
+      'uuid' => array(
+        'label' => t('UUID'),
+        'description' => t('The member\'s universally unique identifier'),
+        'weight' => -1,
+      ),
+    );
+  }
+  return $fields;
+}
+
+/**
+ * Return information about member types in a structured array, keyed by
+ * each type's machine name. Each element is also a structured array defining at
+ * least 'name'.
+ *
+ * This uses hook_member_type_info() to allow other modules to define types.
+ *
+ * @return array
+ */
+function member_types() {
+  $types = &drupal_static(__FUNCTION__);
+  if (empty($types)) {
+    $types = array();
+    $types += module_invoke_all('member_type_info');
+  }
+  return $types;
+}
+
+/**
+ * Load member type information by its machine name.
+ *
+ * @param string $machine_name
+ *   The machine name of the type.
+ * @return mixed
+ *   A stdClass election type object, or FALSE on failure.
+ */
+function member_type_get_info($machine_name) {
+  $type = array(
+    'name' => t('Unknown type'),
+  );
+  $types = member_types();
+  if (isset($types[$machine_name])) {
+    $type = $types[$machine_name];
+  }
+  return $type;
+}
+
+/**
+ * Implements hook_permission().
+ *
+ * @return array
+ */
+function member_permission() {
+  $permissions = array(
+    'administer members' => array(
+      'title' => t('Administer members'),
+      'description' => t('Alter the fields and display settings for member types.'),
+    ),
+    'create member' => array(
+      'title' => t('Create any members'),
+    ),
+    'delete member' => array(
+      'title' => t('Delete any members'),
+      'description' => t('This permission is dangerous: deleting an member automatically deletes ALL associated data.'),
+      'restrict access' => TRUE,
+    ),
+    'edit member' => array(
+      'title' => t('Edit any member'),
+    ),
+    'view member' => array(
+      'title' => t('View any member'),
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements entity_uri(). URI callback for a single member. See:
+ * http://api.drupal.org/api/drupal/includes--common.inc/function/entity_uri/7.
+ *
+ * @param stdClass $entity
+ *
+ * @return array
+ */
+function member_uri(stdClass $member) {
+  $path = 'member/' . $member->member_id;
+  return array(
+    'path' => $path,
+  );
+}
+
+/**
+ * Determines whether the given user has access to a Member.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param $member
+ *   Optionally a member o check access for. If nothing is given, access for
+ *   all members is determined.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function member_access($op, $member = NULL, $account = NULL) {
+  switch ($op) {
+    case 'view':
+      return (bool) user_access('view member', $account);
+      break;
+    case 'create':
+      return (bool) user_access('create member', $account);
+      break;
+    case 'update':
+    case 'edit':
+      return (bool) user_access('edit member', $account);
+      break;
+    case 'delete':
+      return (bool) user_access('delete member', $account);
+      break;
+  }
+  return FALSE;
+}
+
+/**
+ * Load an individual member.
+ *
+ * @param mixed $member_id
+ *   A single member ID.
+ *
+ * @return stdClass
+ *   A stdClass member object.
+ */
+function member_load($member_id = NULL) {
+  $result = entity_load('member', (array) $member_id);
+  if (!is_array($result) || !count($result)) {
+    return FALSE;
+  }
+  return reset($result);
+}
+
+/**
+ * Load multiple members.
+ *
+ * @param mixed $member_id
+ *   An array of member IDs.
+ *
+ * @return stdClass
+ *   A stdClass member object.
+ */
+function member_load_multiple(array $member_ids = array()) {
+  return entity_load('member', $member_ids);
+}
+
+/**
+ * Wrapper function to allow deleting multiple members.
+ *
+ * @param array $member_ids
+ *   Array of member IDs.
+ * @return bool
+ */
+function member_delete_multiple(array $member_ids) {
+  return entity_get_controller('member')->delete($member_ids);
+}
+
+/**
+ * Wrapper function to allow deleting an individual member.
+ *
+ * @see member_delete_multiple()
+ *
+ * @param mixed $member_id
+ *   Single member ID.
+ * @return bool
+ */
+function member_delete($member_id) {
+  return member_delete_multiple(array($member_id));
+}
+
+/**
+ * Wrapper function to allow saving a member.
+ *
+ * @param stdClass $member
+ *   member object.
+ * @return bool
+ */
+function member_save(stdClass $member) {
+  return entity_get_controller('member')->save($member);
+}
+
+/**
+ * Prepares a member object for editing.
+ */
+function member_object_prepare(stdClass $member) {
+  if (!isset($member->member_id) || isset($member->is_new)) {
+    $member->is_new = TRUE;
+    $member->created = REQUEST_TIME;
+    $member->changed = REQUEST_TIME;
+  }
+  module_invoke_all('member_prepare', $member);
+}
+
+
+/**
+ * Title callback for member/%member
+ */
+function member_page_title($member) {
+  return entity_label('member', $member);
+}
+
+/*
+ * Member entity label callback.
+ *
+ * Note that for Drupal 8 the parameter order for label callbacks will be
+ * reversed.
+ *
+ * @param stdClass $entity
+ */
+function member_label(stdClass $entity, $entity_type) {
+
+  if ($entity_type != 'member') {
+    return FALSE;
+  }
+
+  $member_type = member_type_get_info($entity->type);
+  if (isset($member_type['label callback']) && function_exists($member_type['label callback'])) {
+    $function = $member_type['label callback'];
+    // Allow the custom label to return FALSE, to fall back to the main label.
+    $label = $function($entity, $entity_type);
+    if ($label !== FALSE) {
+      return check_plain($label);
+    }
+  }
+
+  if (!empty($entity->uuid)) {
+    return t('Member (UUID @uuid)', array('@uuid' => $entity->uuid));
+  }
+
+  return t('Member (ID @id)', array('@id' => $entity->member_id));
+
+}
+
+/**
+ * Implements hook_theme().
+ */
+function member_theme() {
+  return array(
+    'member' => array(
+      'render element' => 'elements',
+      'template' => 'member',
+    ),
+  );
+}
+
+/**
+ * Generate an array for rendering the given member.
+ *
+ * @param $member
+ *   An member object.
+ * @param $view_mode
+ *   View mode, e.g. 'full', 'teaser'...
+ *
+ * @return
+ *   An array as expected by drupal_render().
+ */
+function member_view($member, $view_mode = 'full') {
+
+  // Remove previously built content, if it exists.
+  $member->content = array();
+
+  $label = entity_label('member', $member);
+
+  if ($view_mode == 'teaser') {
+    $member->content['title'] = array(
+      '#markup' => filter_xss($label),
+      '#weight' => -5,
+    );
+  }
+  else {
+    drupal_set_title($label);
+  }
+
+  // Build fields content.
+  // In case of a multiple view, node_view_multiple() already ran the
+  // 'prepare_view' step. An internal flag prevents the operation from running
+  // twice.
+  field_attach_prepare_view('member', array($member->member_id => $member), $view_mode);
+  entity_prepare_view('member', array($member->member_id => $member));
+  $member->content += field_attach_view('member', $member, $view_mode);
+
+  $build = $member->content;
+  // We don't need duplicate rendering info in member->content.
+  unset($member->content);
+
+  $build += array(
+    '#theme' => 'member',
+    '#member' => $member,
+    '#view_mode' => $view_mode,
+  );
+
+  // Add contextual links for this member, except when the member is already being
+  // displayed on its own page. Modules may alter this behavior (for example,
+  // to restrict contextual links to certain view modes) by implementing
+  // hook_member_view_alter().
+  if (!empty($member->member_id) && $view_mode != 'full') {
+    $build['#contextual_links']['member'] = array('member', array($member->member_id));
+  }
+
+  // Allow modules to modify the structured member.
+  $type = 'member'; // $type is passed by reference to drupal_alter() so it must be a variable.
+  drupal_alter(array('member_view', 'entity_view'), $build, $type);
+
+  return $build;
+
+}
+
+/**
+ * Process variables for member.tpl.php
+ *
+ * The $variables array contains the following arguments:
+ * - $member
+ * - $view_mode
+ * - $page
+ *
+ * @see member.tpl.php
+ */
+function template_preprocess_member(&$variables) {
+
+  $variables['view_mode'] = $variables['elements']['#view_mode'];
+
+  // Provide a distinct $teaser boolean.
+  $variables['teaser'] = $variables['view_mode'] == 'teaser';
+
+  // Provide a distinct $page boolean.
+  $variables['page']      = $variables['view_mode'] == 'full';
+
+  $variables['member'] = $variables['elements']['#member'];
+  $member = $variables['member'];
+
+  $uri = entity_uri('member', $member);
+  $variables['member_url'] = url($uri['path'], $uri['options']);
+  $variables['label']     = check_plain(entity_label('member', $member));
+
+  // Fill the $username variable.
+  $member_account = empty($member->uid)? FALSE : user_load($member->uid);
+  $variables['username'] = empty($member_account)?  FALSE : theme('username', array('account' => $member_account));
+
+  // Fill the $uuid variable.
+  $variables['uuid'] = empty($member->uuid)? FALSE : check_plain($member->uuid);
+
+  $variables = array_merge((array) $member, $variables);
+
+  $variables += array('content' => array());
+  foreach (element_children($variables['elements']) as $key) {
+    $variables['content'][$key] = $variables['elements'][$key];
+  }
+
+  field_attach_preprocess('member', $member, $variables['content'], $variables);
+
+  $variables['classes_array'][] = drupal_html_class('member-type-' . $member->type);
+
+  $variables['theme_hook_suggestions'][] = 'member__' . $member->type;
+  $variables['theme_hook_suggestions'][] = 'member__' . $member->member_id;
+
+}

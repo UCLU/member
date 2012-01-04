@@ -1,0 +1,11 @@
+name = Member
+description = "Provides a fieldable Member entity."
+core = 7.x
+dependencies[] = entity
+
+; Files necessary for this module.
+files[] = includes/member.controller.inc
+files[] = includes/member.admin.inc
+
+; Integrations with other modules.
+files[] = integrations/migrate/migrate-destination-member.inc

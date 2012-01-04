@@ -1,9 +1,9 @@
 <?php
 /**
  * @file
- * Entity controller for the Student module.
+ * Entity controller for the Member module.
  */
-class StudentController extends EntityAPIControllerExportable {
+class MemberController extends EntityAPIControllerExportable {
 
   /**
    * Overrides EntityAPIController::save().
