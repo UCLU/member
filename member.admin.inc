@@ -44,6 +44,7 @@ function member_list_form($form, $form_state) {
   // Build the sortable table header.
   $header = array(
     'label' => array('data' => t('Label')),
+    'status' => array('data' => t('Status'), 'field' => 's.status'),
     'type' => array('data' => t('Type'), 'field' => 's.type'),
     'uid' => array('data' => t('User ID'), 'field' => 's.uid'),
     'uuid' => array('data' => t('UUID'), 'field' => 's.uuid'),
@@ -66,7 +67,7 @@ function member_list_form($form, $form_state) {
     ->extend('PagerDefault')
     ->extend('TableSort')
     ->fields('s', array('member_id'))
-    ->limit(50)
+    ->limit(10)
     ->orderByHeader($header);
 
   // Get an array of member IDs
@@ -83,7 +84,8 @@ function member_list_form($form, $form_state) {
     $type = member_type_get_info($member->type);
 
     $options[$member->member_id] = array(
-      'label' => check_plain(entity_label('member', $member)),
+      'label' => member_label($member, 'member'), // label is sanitized in member_label()
+      'status' => _member_format_status($member),
       'type' => drupal_ucfirst($type['name']),
       'uid' => check_plain($member->uid),
       'uuid' => check_plain($member->uuid),
@@ -132,22 +134,12 @@ function member_list_form($form, $form_state) {
 
   }
 
-  if (FALSE) { // don't bother with tableselect yet
-    $form['members'] = array(
-      '#type' => 'tableselect',
-      '#header' => $header,
-      '#options' => $options,
-      '#empty' => t('No members available.'),
-    );
-  }
-  else {
-    $form['members'] = array(
-      '#theme' => 'table',
-      '#header' => $header,
-      '#rows' => $options,
-      '#empty' => t('No members available.'),
-    );
-  }
+  $form['members'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $options,
+    '#empty' => t('No members available.'),
+  );
 
   $form['pager'] = array('#markup' => theme('pager'));
 
@@ -198,12 +190,23 @@ function member_form($form, &$form_state, $member) {
 
   $form_state['member'] = $member;
 
+  $form['status'] = array(
+    '#type' => 'select',
+    '#title' => t('Membership status'),
+    '#options' => array(
+      1 => t('Active'),
+      0 => t('Inactive'),
+    ),
+    '#default_value' => isset($member->status)? $member->status : 1,
+    '#required' => TRUE,
+  );
+
   $form['uuid'] = array(
     '#type' => 'textfield',
-    '#title' => t('UUID'),
+    '#title' => t('Universally unique identifier (UUID)'),
+    '#maxlength' => 255,
     '#default_value' => isset($member->uuid)? $member->uuid : '',
-    '#required' => FALSE,
-    '#size' => 30,
+    '#required' => TRUE,
   );
 
   $form['buttons'] = array(

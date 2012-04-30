@@ -17,6 +17,12 @@ class MigrateDestinationMember extends MigrateDestinationEntity {
         'not null' => TRUE,
         'description' => 'ID of destination member',
       ),
+      'uuid' => array(
+        'description' => 'The UUID of the member (for matching against external systems).',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
     );
   }
 
@@ -25,6 +31,7 @@ class MigrateDestinationMember extends MigrateDestinationEntity {
     $fields['member_id'] = t('Member: existing member ID');
     $fields['uid'] = t('Member: Drupal user ID, default is NULL');
     $fields['uuid'] = t('Member: universally unique identifier, default is NULL');
+    $fields['status'] = t('Member: membership status, default is 1');
     $fields['created'] = t('Member: created timestamp, default is now');
     $fields['changed'] = t('Member: last modified timestamp, default is now');
 

@@ -12,6 +12,10 @@
     <h2><a href="<?php print $url; ?>"><?php print $label; ?></a></h2>
   <?php endif; ?>
 
+  <div class="pseudo-field member-status">
+    <span class="label">Membership status: </span><span class="item"><?php print $status; ?></span>
+  </div>
+
   <?php if ($username): ?>
     <div class="pseudo-field member-username">
       <span class="label">Username: </span><span class="item"><?php print $username; ?></span>

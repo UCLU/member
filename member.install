@@ -39,10 +39,10 @@ function member_schema() {
         'not null' => FALSE,
       ),
       'uuid' => array(
-        'description' => 'The UUID of the member (for matching against external systems).',
+        'description' => 'The Universally Unique ID of the member.',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => FALSE,
+        'not null' => TRUE,
       ),
       'created' => array(
         'description' => 'The Unix timestamp for when the member was created.',
@@ -69,18 +69,4 @@ function member_schema() {
 
   return $schema;
 
-}
-
-/**
- * Add status field.
- */
-function member_update_7001() {
-  $schema = member_schema();
-  $spec = $schema['member']['fields']['status'];
-  $keys_new = array(
-    'indexes' => array(
-      'status' => array('status'),
-    ),
-  );
-  db_add_field('member', 'status', $spec, $keys_new);
 }

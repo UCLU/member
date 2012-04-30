@@ -40,6 +40,7 @@ function member_entity_info() {
       ),
     ),
     'redirect' => FALSE, // Redirect module
+    'metatags' => FALSE, // Metatags module
   );
 
   foreach (member_types() as $machine_name => $type) {
@@ -74,6 +75,11 @@ function member_entity_property_info() {
     'type' => 'integer',
     'description' => t('The unique ID of the member entity.'),
     'schema field' => 'member_id',
+  );
+  $properties['status'] = array(
+    'label' => t('Membership status'),
+    'type' => 'integer',
+    'schema field' => 'status',
   );
   $properties['type'] = array(
     'label' => t('Type'),
@@ -221,10 +227,15 @@ function member_field_extra_fields() {
   $fields = array('member' => array());
   foreach (member_types() as $machine_name => $type) {
     $fields['member'][$machine_name]['form'] = array(
+      'status' => array(
+        'label' => t('Membership status'),
+        'description' => t('The status of the membership (active/inactive).'),
+        'weight' => -20,
+      ),
       'uuid' => array(
         'label' => t('UUID'),
-        'description' => t('The member\'s universally unique identifier'),
-        'weight' => -1,
+        'description' => t('The member\'s universally unique identifier.'),
+        'weight' => -10,
       ),
     );
   }
@@ -243,8 +254,7 @@ function member_field_extra_fields() {
 function member_types() {
   $types = &drupal_static(__FUNCTION__);
   if (empty($types)) {
-    $types = array();
-    $types += module_invoke_all('member_type_info');
+    $types = array_merge(array(), module_invoke_all('member_type_info'));
   }
   return $types;
 }
@@ -376,6 +386,20 @@ function member_load_multiple(array $member_ids = array()) {
 }
 
 /**
+ * Implements hook_user_load().
+ */
+function member_user_load(array $users) {
+  $result = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($users)));
+  foreach ($result as $column => $record) {
+    $user = &$users[$record->uid];
+    if (!isset($user['member'])) {
+      $user['member'] = array();
+    }
+    $user['member'][$column] = $record;
+  }
+}
+
+/**
  * Wrapper function to allow deleting multiple members.
  *
  * @param array $member_ids
@@ -450,12 +474,9 @@ function member_label(stdClass $entity, $entity_type) {
     // Allow the custom label to return FALSE, to fall back to the main label.
     $label = $function($entity, $entity_type);
     if ($label !== FALSE) {
+      // @todo find out if sanitizing should happen here.
       return check_plain($label);
     }
-  }
-
-  if (!empty($entity->uuid)) {
-    return t('Member (UUID @uuid)', array('@uuid' => $entity->uuid));
   }
 
   return t('Member (ID @id)', array('@id' => $entity->member_id));
@@ -490,16 +511,16 @@ function member_view($member, $view_mode = 'full') {
   // Remove previously built content, if it exists.
   $member->content = array();
 
-  $label = entity_label('member', $member);
+  $label = member_label($member, 'member'); // this is already sanitized.
 
   if ($view_mode == 'teaser') {
     $member->content['title'] = array(
-      '#markup' => filter_xss($label),
+      '#markup' => $label,
       '#weight' => -5,
     );
   }
   else {
-    drupal_set_title($label);
+    drupal_set_title($label, PASS_THROUGH);
   }
 
   // Build fields content.
@@ -537,6 +558,13 @@ function member_view($member, $view_mode = 'full') {
 }
 
 /**
+ * Return a description of the membership status.
+ */
+function _member_format_status(stdClass $member) {
+  return $member->status? t('Active') : t('Inactive');
+}
+
+/**
  * Process variables for member.tpl.php
  *
  * The $variables array contains the following arguments:
@@ -562,6 +590,9 @@ function template_preprocess_member(&$variables) {
   $uri = entity_uri('member', $member);
   $variables['member_url'] = url($uri['path'], $uri['options']);
   $variables['label']     = check_plain(entity_label('member', $member));
+
+  // Fill the $status variable.
+  $variables['status'] = check_plain(_member_format_status($member));
 
   // Fill the $username variable.
   $member_account = empty($member->uid)? FALSE : user_load($member->uid);
