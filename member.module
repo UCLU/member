@@ -76,6 +76,12 @@ function member_entity_property_info() {
     'description' => t('The unique ID of the member entity.'),
     'schema field' => 'member_id',
   );
+  $properties['name'] = array(
+    'label' => t('Name'),
+    'type' => 'text',
+    'description' => t('The full name of the member.'),
+    'schema field' => 'name',
+  );
   $properties['status'] = array(
     'label' => t('Membership status'),
     'type' => 'integer',
@@ -227,6 +233,11 @@ function member_field_extra_fields() {
   $fields = array('member' => array());
   foreach (member_types() as $machine_name => $type) {
     $fields['member'][$machine_name]['form'] = array(
+      'Name' => array(
+        'label' => t('Name'),
+        'description' => t('The full name of the member.'),
+        'weight' => -30,
+      ),
       'status' => array(
         'label' => t('Membership status'),
         'description' => t('The status of the membership (active/inactive).'),
@@ -391,11 +402,7 @@ function member_load_multiple(array $member_ids = array()) {
 function member_user_load(array $users) {
   $result = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($users)));
   foreach ($result as $column => $record) {
-    $user = &$users[$record->uid];
-    if (!isset($user['member'])) {
-      $user['member'] = array();
-    }
-    $user['member'][$column] = $record;
+    $users[$record->uid]->member = $record;
   }
 }
 
@@ -477,6 +484,10 @@ function member_label(stdClass $entity, $entity_type) {
       // @todo find out if sanitizing should happen here.
       return check_plain($label);
     }
+  }
+
+  if (!empty($entity->name)) {
+    return check_plain($entity->name);
   }
 
   return t('Member (ID @id)', array('@id' => $entity->member_id));
@@ -601,7 +612,8 @@ function template_preprocess_member(&$variables) {
   // Fill the $uuid variable.
   $variables['uuid'] = empty($member->uuid)? FALSE : check_plain($member->uuid);
 
-  $variables = array_merge((array) $member, $variables);
+  // Fill the $name variable.
+  $variables['name'] = empty($member->name)? FALSE : check_plain($member->name);
 
   $variables += array('content' => array());
   foreach (element_children($variables['elements']) as $key) {

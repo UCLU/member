@@ -190,6 +190,14 @@ function member_form($form, &$form_state, $member) {
 
   $form_state['member'] = $member;
 
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Full name'),
+    '#maxlength' => 255,
+    '#default_value' => isset($member->name)? $member->name : '',
+    '#required' => FALSE,
+  );
+
   $form['status'] = array(
     '#type' => 'select',
     '#title' => t('Membership status'),
@@ -207,6 +215,19 @@ function member_form($form, &$form_state, $member) {
     '#maxlength' => 255,
     '#default_value' => isset($member->uuid)? $member->uuid : '',
     '#required' => TRUE,
+  );
+
+  if (!empty($member->uid)) {
+    $member_account = user_load($member->uid);
+  }
+
+  $form['username'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Associated user account'),
+    '#maxlength' => 60,
+    '#autocomplete_path' => 'user/autocomplete',
+    '#default_value' => isset($member_account)? $member_account->name : '',
+    '#required' => FALSE,
   );
 
   $form['buttons'] = array(
@@ -259,15 +280,18 @@ function member_form_validate($form, &$form_state) {
  * @return void
  */
 function member_form_submit($form, &$form_state) {
-  global $user;
   $member = &$form_state['member'];
 
-  if (isset($form_state['values']['uid'])) {
-    $member->uid = $form_state['values']['uid'];
+  if (!empty($form_state['values']['username']) && ($account = user_load_by_name($form_state['values']['username']))) {
+    $member->uid = $account->uid;
   }
 
   if (isset($form_state['values']['uuid'])) {
     $member->uuid = $form_state['values']['uuid'];
+  }
+
+  if (isset($form_state['values']['name'])) {
+    $member->name = $form_state['values']['name'];
   }
 
   field_attach_submit('member', $member, $form, $form_state);

@@ -33,16 +33,22 @@ function member_schema() {
         'length' => 100,
         'not null' => TRUE,
       ),
+      'uuid' => array(
+        'description' => 'The Universally Unique ID of the member (allowing linking to external systems).',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The (full) name of the member.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
       'uid' => array(
         'description' => 'The Drupal user ID of the member: relates to {user}.uid.',
         'type' => 'int',
         'not null' => FALSE,
-      ),
-      'uuid' => array(
-        'description' => 'The Universally Unique ID of the member.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
       ),
       'created' => array(
         'description' => 'The Unix timestamp for when the member was created.',
@@ -61,6 +67,7 @@ function member_schema() {
       'type' => array('type'),
       'created' => array('created'),
       'status' => array('status'),
+      'name' => array('name'),
     ),
     'unique keys' => array(
       'uuid' => array('uuid'),

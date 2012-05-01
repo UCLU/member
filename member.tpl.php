@@ -16,6 +16,12 @@
     <span class="label">Membership status: </span><span class="item"><?php print $status; ?></span>
   </div>
 
+  <?php if ($name): ?>
+    <div class="pseudo-field member-name">
+      <span class="label">Name: </span><span class="item"><?php print $name; ?></span>
+    </div>
+  <?php endif; ?>
+
   <?php if ($username): ?>
     <div class="pseudo-field member-username">
       <span class="label">Username: </span><span class="item"><?php print $username; ?></span>
