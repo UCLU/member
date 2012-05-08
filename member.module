@@ -397,13 +397,52 @@ function member_load_multiple(array $member_ids = array()) {
 }
 
 /**
+ * Add member information to a user.
+ *
+ * @param stdClass $user
+ * User object, or array of user objects keyed by UID.
+ *
+ * @return
+ * TRUE if member information is now added for the account, FALSE otherwise.
+ */
+function member_add_info(stdClass $user) {
+  if (isset($user->member)) {
+    // Nothing needs doing.
+    return;
+  }
+  $users = array($user->uid => $user);
+  return member_add_info_multiple($users);
+}
+
+/**
+ * Add member information to multiple users.
+ *
+ * @param array $users
+ * Array of user objects keyed by UID.
+ *
+ * @return
+ * TRUE if member information is now added for ALL accounts specified, FALSE otherwise.
+ */
+function member_add_info_multiple(array $users) {
+  foreach ($users as $uid => $account) {
+    if (isset($account->member)) {
+      unset($users[$uid]);
+    }
+  }
+  if (!count($users)) {
+    return;
+  }
+  $members = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($users)));
+  foreach ($members as $member) {
+    $users[$member->uid]->member = $member;
+  }
+}
+
+/**
  * Implements hook_user_load().
  */
 function member_user_load(array $users) {
-  $result = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($users)));
-  foreach ($result as $column => $record) {
-    $users[$record->uid]->member = $record;
-  }
+  member_add_info_multiple($users);
 }
 
 /**
