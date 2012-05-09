@@ -399,19 +399,19 @@ function member_load_multiple(array $member_ids = array()) {
 /**
  * Add member information to a user.
  *
- * @param stdClass $user
- * User object, or array of user objects keyed by UID.
+ * @param stdClass $account
+ * User account object, or array of account objects keyed by UID.
  *
  * @return
- * TRUE if member information is now added for the account, FALSE otherwise.
+ * TRUE if member information exists for the account, FALSE otherwise.
  */
-function member_add_info(stdClass $user) {
-  if (isset($user->member)) {
+function member_add_info(stdClass $account) {
+  if (isset($account->member)) {
     // Nothing needs doing.
-    return;
+    return TRUE;
   }
-  $users = array($user->uid => $user);
-  return member_add_info_multiple($users);
+  $accounts = array($account->uid => $account);
+  return member_add_info_multiple($accounts);
 }
 
 /**
@@ -421,21 +421,27 @@ function member_add_info(stdClass $user) {
  * Array of user objects keyed by UID.
  *
  * @return
- * TRUE if member information is now added for ALL accounts specified, FALSE otherwise.
+ * TRUE if member information exists for ALL accounts specified, FALSE otherwise.
  */
-function member_add_info_multiple(array $users) {
-  foreach ($users as $uid => $account) {
+function member_add_info_multiple(array $accounts) {
+  foreach ($accounts as $uid => $account) {
     if (isset($account->member)) {
-      unset($users[$uid]);
+      unset($accounts[$uid]);
     }
   }
-  if (!count($users)) {
-    return;
+  if (!count($accounts)) {
+    return TRUE;
   }
-  $members = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($users)));
+  $members = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($accounts)));
   foreach ($members as $member) {
-    $users[$member->uid]->member = $member;
+    $accounts[$member->uid]->member = $member;
   }
+  foreach ($accounts as $account) {
+    if (!isset($account->member)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
 }
 
 /**
