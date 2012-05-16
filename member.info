@@ -8,4 +8,5 @@ files[] = includes/member.controller.inc
 files[] = includes/member.admin.inc
 
 ; Integrations with other modules.
-files[] = integrations/migrate/migrate-destination-member.inc
+files[] = migrate-destination-member.inc
+files[] = member.views.inc

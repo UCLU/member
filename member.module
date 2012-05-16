@@ -673,3 +673,12 @@ function template_preprocess_member(&$variables) {
   $variables['theme_hook_suggestions'][] = 'member__' . $member->member_id;
 
 }
+
+/**
+ * Implements hook_views_api().
+ */
+function member_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
