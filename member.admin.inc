@@ -147,7 +147,7 @@ function member_list_form($form, $form_state) {
 }
 
 /**
- * Page callback for adding a member, path: admin/config/members/list/add/%.
+ * Page callback for adding a member, path: admin/members/list/add/%.
  *
  * @param string $machine_name
  *   The machine name of the member type (bundle key).
@@ -393,7 +393,7 @@ function member_form_delete_confirm_submit($form, &$form_state) {
   }
 
   if (empty($_GET['destination'])) {
-    $form_state['redirect'] = 'admin/config/members';
+    $form_state['redirect'] = 'admin/members';
   }
 
 

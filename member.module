@@ -47,8 +47,8 @@ function member_entity_info() {
     $entities['member']['bundles'][$machine_name] = array(
       'label' => drupal_ucfirst($type['name']),
       'admin' => array(
-        'path' => 'admin/config/members/' . $machine_name,
-        'real path' => 'admin/config/members/' . $machine_name,
+        'path' => 'admin/members/' . $machine_name,
+        'real path' => 'admin/members/' . $machine_name,
         'bundle argument' => 3,
         'access arguments' => array('administer members'),
       ),
@@ -141,16 +141,17 @@ function member_menu() {
 
   $items = array();
 
-  $items['admin/config/members'] = array(
+  $items['admin/members'] = array(
     'title' => 'Members',
     'description' => 'Administer members.',
     'page callback' => 'system_admin_menu_block_page',
     'file' => 'system.admin.inc',
     'file path' => drupal_get_path('module', 'system'),
     'access arguments' => array('administer members'),
+    'weight' => -10,
   );
 
-  $items['admin/config/members/list'] = array(
+  $items['admin/members/list'] = array(
     'title' => 'Member list',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('member_list_form'),
@@ -159,28 +160,6 @@ function member_menu() {
     'description' => 'View, edit, and add new members.',
     'weight' => -10,
   );
-
-  foreach (member_types() as $machine_name => $type) {
-    $items['admin/config/members/list/add/' . $machine_name] = array(
-      'title' => 'Add new ' . $type['name'],
-      'title callback' => 'check_plain',
-      'page callback' => 'member_page_add',
-      'page arguments' => array(5),
-      'access arguments' => array('administer members'),
-      'file' => 'member.admin.inc',
-      'description' => empty($type['description'])? '' : $type['description'],
-      'type' => MENU_LOCAL_ACTION,
-    );
-    $items['admin/config/members/' . $machine_name] = array(
-      'title' => drupal_ucfirst($type['name']) . ' settings',
-      'title callback' => 'check_plain',
-      'page callback' => 'system_admin_menu_block_page',
-      'access arguments' => array('administer members'),
-      'file' => 'system.admin.inc',
-      'file path' => drupal_get_path('module', 'system'),
-      'description' => empty($type['description'])? '' : $type['description'],
-    );
-  }
 
   $items['member/%member'] = array(
     'title callback' => 'member_page_title',
@@ -224,6 +203,34 @@ function member_menu() {
 
   return $items;
 
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function member_menu_alter(&$items) {
+  foreach (member_types() as $machine_name => $type) {
+    $items['admin/members/list/add/' . $machine_name] = array(
+      'title' => 'Add new ' . $type['name'],
+      'title callback' => 'check_plain',
+      'page callback' => 'member_page_add',
+      'page arguments' => array(5),
+      'access arguments' => array('administer members'),
+      'file' => 'member.admin.inc',
+      'file path' => drupal_get_path('module', 'member'),
+      'description' => empty($type['description'])? '' : $type['description'],
+      'type' => MENU_LOCAL_ACTION,
+    );
+    $items['admin/members/' . $machine_name] = array(
+      'title' => drupal_ucfirst($type['name']) . ' settings',
+      'title callback' => 'check_plain',
+      'page callback' => 'system_admin_menu_block_page',
+      'access arguments' => array('administer members'),
+      'file' => 'system.admin.inc',
+      'file path' => drupal_get_path('module', 'system'),
+      'description' => 'Settings for the member type "' . $machine_name . '".',
+    );
+  }
 }
 
 /**
@@ -435,6 +442,9 @@ function member_add_info_multiple(array $accounts) {
   $members = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($accounts)));
   foreach ($members as $member) {
     $accounts[$member->uid]->member = $member;
+    if (!empty($member->name) && empty($accounts[$member->uid]->realname)) {
+      $accounts[$member->uid]->realname = $member->name;
+    }
   }
   foreach ($accounts as $account) {
     if (!isset($account->member)) {
