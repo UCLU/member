@@ -404,6 +404,44 @@ function member_load_multiple(array $member_ids = array()) {
 }
 
 /**
+ * Find and link a member record to a user account.
+ *
+ * @param stdClass $account
+ *   The user account to link to any found member record.
+ * @param string $uuid
+ *   The universally unique ID by which to look up members.
+ *
+ * @return mixed
+ *   The member ID if the account is (now) linked to a member record, FALSE
+ *   otherwise.
+ */
+function member_link_account($account, $uuid) {
+  $members = db_query_range('SELECT * FROM {member} WHERE uuid = :uuid', 0, 1, array(':uuid' => $uuid));
+  foreach ($members as $member) {
+    if ($member->uid == $account->uid) {
+      return $member->member_id;
+    }
+    $message = 'Member @mid (@name) now associated with account @uid based on UUID @uuid.';
+    $severity = WATCHDOG_NOTICE;
+    if (!empty($member->uid)) {
+      $message = 'Member @mid (@name) altered: now asssociated with account @uid (previously @prev), based on the UUID @uuid.';
+      $severity = WATCHDOG_WARNING;
+    }
+    watchdog('member', $message, array(
+      '@mid' => $member->member_id,
+      '@name' => $member->name,
+      '@uid' => $account->uid,
+      '@uuid' => $uuid,
+      '@prev' => $member->uid,
+    ), $severity);
+    $member->uid = $account->uid;
+    member_save($member);
+    return $member->member_id;
+  }
+  return FALSE;
+}
+
+/**
  * Add member information to a user.
  *
  * @param stdClass $account
