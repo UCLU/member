@@ -24,11 +24,13 @@ function member_views_data() {
   $data['member']['table']['entity type'] = 'member';
 
   // Join to the User table ({users}).
-  $data['member']['table']['join'] = array(
-    'users' => array(
-      'left_field' => 'uid',
-      'field' => 'uid',
-    ),
+  $data['users']['table']['join']['member'] = array(
+    'left_field' => 'uid',
+    'field' => 'uid',
+  );
+  $data['member']['table']['join']['users'] = array(
+    'left_field' => 'uid',
+    'field' => 'uid',
   );
 
   // Expose the member ID.
