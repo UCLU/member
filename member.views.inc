@@ -51,6 +51,36 @@ function member_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
+  
+  // Expose the member's user ID.
+  $data['member']['uid'] = array(
+    'title' => t('Uid'),
+    'help' => t("The owner's user ID."),
+    'field' => array(
+      'handler' => 'views_handler_field_user',
+      'click sortable' => TRUE,
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_user_uid',
+      'name field' => 'name', // display this field in the summary
+    ),
+    'filter' => array(
+      'title' => t('Name'),
+      'handler' => 'views_handler_filter_user_name',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'relationship' => array(
+      'title' => t('User'),
+      'help' => t("Relate this member to its associated user account"),
+      'handler' => 'views_handler_relationship',
+      'base' => 'users',
+      'base field' => 'uid',
+      'field' => 'uid',
+      'label' => t('Member\'s user account'),
+    ),
+  );
 
   // Expose the member UUID.
   $data['member']['uuid'] = array(
