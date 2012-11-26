@@ -147,7 +147,7 @@ function member_menu() {
     'page callback' => 'system_admin_menu_block_page',
     'file' => 'system.admin.inc',
     'file path' => drupal_get_path('module', 'system'),
-    'access arguments' => array('administer members'),
+    'access arguments' => array('edit member'),
     'weight' => -10,
   );
 
