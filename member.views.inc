@@ -52,6 +52,28 @@ function member_views_data() {
     ),
   );
   
+  // Expose the member status.
+  $data['member']['status'] = array(
+    'title' => t('Status'),
+    'help' => t('Whether or not the member is active.'),
+    'field' => array(
+      'handler' => 'views_handler_field_boolean',
+      'click sortable' => TRUE,
+      'output formats' => array(
+        'enabled-disabled' => array(t('Active'), t('Inactive')),
+      ),
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_boolean_operator',
+      'label' => t('Active'),
+      'type' => 'yes-no',
+      'use equal' => TRUE,
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  
   // Expose the member's user ID.
   $data['member']['uid'] = array(
     'title' => t('Uid'),
