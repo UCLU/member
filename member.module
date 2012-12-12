@@ -453,7 +453,7 @@ function member_link_account($account, $uuid) {
 function member_add_info(stdClass $account) {
   if (isset($account->member)) {
     // Nothing needs doing.
-    return TRUE;
+    return empty($account->member) ? FALSE : TRUE;
   }
   $accounts = array($account->uid => $account);
   return member_add_info_multiple($accounts);
@@ -486,6 +486,7 @@ function member_add_info_multiple(array $accounts) {
   }
   foreach ($accounts as $account) {
     if (!isset($account->member)) {
+      $account->member = FALSE;
       return FALSE;
     }
   }
