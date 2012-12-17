@@ -355,7 +355,7 @@ function member_form_delete_confirm($form, &$form_state, $member) {
     $form,
     t('Are you sure you want to delete %label?', array('%label' => entity_label('member', $member))),
     $member_uri_path,
-    t('Deleting a member also deletes ALL associated data. This action cannot be undone.'),
+    NULL,
     t('Delete'),
     t('Cancel')
   );

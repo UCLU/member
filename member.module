@@ -312,7 +312,6 @@ function member_permission() {
     ),
     'delete member' => array(
       'title' => t('Delete any members'),
-      'description' => t('This permission is dangerous: deleting an member automatically deletes ALL associated data.'),
       'restrict access' => TRUE,
     ),
     'edit member' => array(
