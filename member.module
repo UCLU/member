@@ -444,52 +444,45 @@ function member_link_account($account, $uuid) {
  * Add member information to a user.
  *
  * @param stdClass $account
- * User account object, or array of account objects keyed by UID.
+ *   User account object, or array of account objects keyed by UID.
  *
  * @return
- * TRUE if member information exists for the account, FALSE otherwise.
+ *   TRUE if member information exists for the account, FALSE otherwise.
  */
 function member_add_info(stdClass $account) {
-  if (isset($account->member)) {
-    // Nothing needs doing.
-    return empty($account->member) ? FALSE : TRUE;
+  if (!empty($account->member)) {
+    return TRUE;
   }
-  $accounts = array($account->uid => $account);
-  return member_add_info_multiple($accounts);
+  member_add_info_multiple(array($account->uid => $account));
+  return !empty($account->member);
 }
 
 /**
  * Add member information to multiple users.
  *
  * @param array $users
- * Array of user objects keyed by UID.
- *
- * @return
- * TRUE if member information exists for ALL accounts specified, FALSE otherwise.
+ *   Array of user objects keyed by UID.
  */
 function member_add_info_multiple(array $accounts) {
   foreach ($accounts as $uid => $account) {
-    if (isset($account->member)) {
+    if (!empty($account->member)) {
       unset($accounts[$uid]);
     }
   }
   if (!count($accounts)) {
     return TRUE;
   }
-  $members = db_query('SELECT * FROM {member} WHERE uid IN (:uids)', array(':uids' => array_keys($accounts)));
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'member')
+    ->propertyCondition('uid', array_keys($accounts), 'IN');
+  $results = $query->execute();
+  if (!isset($results['member'])) {
+    return FALSE;
+  }
+  $members = member_load_multiple(array_keys($results['member']));
   foreach ($members as $member) {
     $accounts[$member->uid]->member = $member;
-    if (!empty($member->name) && empty($accounts[$member->uid]->realname)) {
-      $accounts[$member->uid]->realname = $member->name;
-    }
   }
-  foreach ($accounts as $account) {
-    if (!isset($account->member)) {
-      $account->member = FALSE;
-      return FALSE;
-    }
-  }
-  return TRUE;
 }
 
 /**
