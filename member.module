@@ -147,7 +147,7 @@ function member_menu() {
     'page callback' => 'system_admin_menu_block_page',
     'file' => 'system.admin.inc',
     'file path' => drupal_get_path('module', 'system'),
-    'access arguments' => array('edit member'),
+    'access arguments' => array('view any member'),
     'weight' => -10,
   );
 
@@ -155,7 +155,7 @@ function member_menu() {
     'title' => 'Member list',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('member_list_form'),
-    'access arguments' => array('administer members'),
+    'access arguments' => array('view any member'),
     'file' => 'member.admin.inc',
     'description' => 'View, edit, and add new members.',
     'weight' => -10,
@@ -215,7 +215,7 @@ function member_menu_alter(&$items) {
       'title callback' => 'check_plain',
       'page callback' => 'member_page_add',
       'page arguments' => array(4),
-      'access arguments' => array('administer members'),
+      'access arguments' => array('create member'),
       'file' => 'member.admin.inc',
       'file path' => drupal_get_path('module', 'member'),
       'description' => empty($type['description'])? '' : $type['description'],
@@ -308,16 +308,16 @@ function member_permission() {
       'description' => t('Alter the fields and display settings for member types.'),
     ),
     'create member' => array(
-      'title' => t('Create any members'),
+      'title' => t('Create a member'),
     ),
-    'delete member' => array(
-      'title' => t('Delete any members'),
+    'delete any member' => array(
+      'title' => t('Delete any member'),
       'restrict access' => TRUE,
     ),
-    'edit member' => array(
+    'edit any member' => array(
       'title' => t('Edit any member'),
     ),
-    'view member' => array(
+    'view any member' => array(
       'title' => t('View any member'),
     ),
   );
@@ -356,17 +356,17 @@ function member_uri(stdClass $member) {
 function member_access($op, $member = NULL, $account = NULL) {
   switch ($op) {
     case 'view':
-      return (bool) user_access('view member', $account);
+      return (bool) user_access('view any member', $account);
       break;
     case 'create':
       return (bool) user_access('create member', $account);
       break;
     case 'update':
     case 'edit':
-      return (bool) user_access('edit member', $account);
+      return (bool) user_access('edit any member', $account);
       break;
     case 'delete':
-      return (bool) user_access('delete member', $account);
+      return (bool) user_access('delete any member', $account);
       break;
   }
   return FALSE;
