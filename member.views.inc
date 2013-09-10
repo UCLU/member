@@ -51,7 +51,7 @@ function member_views_data() {
       'handler' => 'views_handler_argument_numeric',
     ),
   );
-  
+
   // Expose the member status.
   $data['member']['status'] = array(
     'title' => t('Status'),
@@ -73,11 +73,30 @@ function member_views_data() {
       'handler' => 'views_handler_sort',
     ),
   );
-  
+
+  // Expose the member's name.
+  $data['member']['name'] = array(
+    'title' => t('Name'),
+    'help' => t('The name of the member.'),
+    'field' => array(
+      'field' => 'name',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_string',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+  );
+
   // Expose the member's user ID.
   $data['member']['uid'] = array(
-    'title' => t('Uid'),
-    'help' => t("The owner's user ID."),
+    'title' => t('UID'),
+    'help' => t("The member's user ID."),
     'field' => array(
       'handler' => 'views_handler_field_user',
       'click sortable' => TRUE,
@@ -87,7 +106,7 @@ function member_views_data() {
       'name field' => 'name', // display this field in the summary
     ),
     'filter' => array(
-      'title' => t('Name'),
+      'title' => t('Username'),
       'handler' => 'views_handler_filter_user_name',
     ),
     'sort' => array(
