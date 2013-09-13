@@ -418,8 +418,12 @@ function member_link_account($account, $uuid) {
   $members = db_query_range('SELECT * FROM {member} WHERE uuid = :uuid', 0, 1, array(':uuid' => $uuid));
   foreach ($members as $member) {
     if ($member->uid == $account->uid) {
+      $account->member = $member;
       return $member->member_id;
     }
+    $member->uid = $account->uid;
+    member_save($member);
+    $account->member = $member;
     $message = 'Member @mid (@name) now associated with account @uid based on UUID @uuid.';
     $severity = WATCHDOG_NOTICE;
     if (!empty($member->uid)) {
@@ -433,8 +437,6 @@ function member_link_account($account, $uuid) {
       '@uuid' => $uuid,
       '@prev' => $member->uid,
     ), $severity);
-    $member->uid = $account->uid;
-    member_save($member);
     return $member->member_id;
   }
   return FALSE;
