@@ -415,31 +415,39 @@ function member_load_multiple(array $member_ids = array()) {
  *   otherwise.
  */
 function member_link_account($account, $uuid) {
-  $members = db_query_range('SELECT * FROM {member} WHERE uuid = :uuid', 0, 1, array(':uuid' => $uuid));
-  foreach ($members as $member) {
-    if ($member->uid == $account->uid) {
-      $account->member = $member;
-      return $member->member_id;
-    }
-    $member->uid = $account->uid;
-    member_save($member);
-    $account->member = $member;
-    $message = 'Member @mid (@name) now associated with account @uid based on UUID @uuid.';
-    $severity = WATCHDOG_NOTICE;
-    if (!empty($member->uid)) {
-      $message = 'Member @mid (@name) altered: now asssociated with account @uid (previously @prev), based on the UUID @uuid.';
-      $severity = WATCHDOG_WARNING;
-    }
-    watchdog('member', $message, array(
-      '@mid' => $member->member_id,
-      '@name' => $member->name,
-      '@uid' => $account->uid,
-      '@uuid' => $uuid,
-      '@prev' => $member->uid,
-    ), $severity);
+  // Find a member record based on the UUID.
+  $member_id = db_query_range('SELECT member_id FROM {member} WHERE uuid = :uuid', 0, 1, array(':uuid' => $uuid))->fetchField();
+  if (!$member_id) {
+    return FALSE;
+  }
+  // Load the member entity in full.
+  $member = member_load($member_id);
+  // Save the member information to the account.
+  $account->member = $member;
+  // If the account is already linked, return the member ID directly.
+  if ($member->uid == $account->uid) {
     return $member->member_id;
   }
-  return FALSE;
+  // Otherwise, update the member with the account's UID.
+  $new = empty($member->uid);
+  $member->uid = $account->uid;
+  member_save($member);
+  if ($new) {
+    $message = 'Member @mid (@name) now associated with account @uid based on UUID @uuid.';
+    $severity = WATCHDOG_NOTICE;
+  }
+  else {
+    $message = 'Member @mid (@name) altered: now asssociated with account @uid (previously @prev), based on the UUID @uuid.';
+    $severity = WATCHDOG_WARNING;
+  }
+  watchdog('member', $message, array(
+    '@mid' => $member->member_id,
+    '@name' => $member->name,
+    '@uid' => $account->uid,
+    '@uuid' => $uuid,
+    '@prev' => $member->uid,
+  ), $severity);
+  return $member->member_id;
 }
 
 /**
