@@ -1,0 +1,24 @@
+/**
+ * CSS for the Member module.
+ */
+
+/**
+ * Navbar icons.
+ *
+ * @see icons/README.md
+ * @see https://drupal.org/project/navbar
+ */
+.navbar-icon-members:before {
+  background-image: url("icons/group_font_awesome-787878.svg");
+}
+.no-svg .navbar-icon-members:before {
+  background-image: url("icons/group_font_awesome-787878.png");
+}
+.navbar-icon-members:active:before,
+.navbar-icon-members.navbar-active:before {
+  background-image: url("icons/group_font_awesome.svg");
+}
+.no-svg .navbar-icon-members:active:before,
+.no-svg .navbar-icon-members.navbar-active:before {
+  background-image: url("icons/group_font_awesome.png");
+}

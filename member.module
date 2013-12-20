@@ -1,10 +1,10 @@
 <?php
-/*
+/**
  * @file
  * Main module file for Member.
  */
 
-/*
+/**
  * Implements hook_entity_info().
  */
 function member_entity_info() {
@@ -60,7 +60,7 @@ function member_entity_info() {
 
 }
 
-/*
+/**
  * Implements hook_entity_property_info().
  *
  * See http://drupalcontrib.org/api/drupal/contributions--entity--entity.api.php/function/hook_entity_property_info/7
@@ -122,7 +122,7 @@ function member_entity_property_info() {
   return $properties;
 }
 
-/*
+/**
  * Validation callback for the member property 'uid'.
  *
  * @see member_entity_property_info()
@@ -557,7 +557,7 @@ function member_page_title($member) {
   return entity_label('member', $member);
 }
 
-/*
+/**
  * Member entity label callback.
  *
  * Note that for Drupal 8 the parameter order for label callbacks will be

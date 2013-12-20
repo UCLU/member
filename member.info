@@ -2,6 +2,7 @@ name = Member
 description = "Provides a fieldable Member entity."
 core = 7.x
 dependencies[] = entity
+stylesheets[all][] = member.css
 
 ; Files necessary for this module.
 files[] = includes/member.controller.inc
