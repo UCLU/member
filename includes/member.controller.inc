@@ -24,18 +24,4 @@ class MemberController extends EntityAPIControllerExportable {
 
   }
 
-  /**
-   * Overrides EntityAPIController::delete(), adding a Boolean return value.
-   */
-  public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    try {
-      parent::delete($ids, $transaction);
-    }
-    catch (Exception $e) {
-      throw $e;
-      return FALSE;
-    }
-    return TRUE;
-  }
-
 }

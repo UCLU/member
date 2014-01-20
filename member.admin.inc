@@ -201,10 +201,7 @@ function member_form($form, &$form_state, $member) {
   $form['status'] = array(
     '#type' => 'select',
     '#title' => t('Membership status'),
-    '#options' => array(
-      1 => t('Active'),
-      0 => t('Inactive'),
-    ),
+    '#options' => member_get_status_options(),
     '#default_value' => isset($member->status)? $member->status : 1,
     '#required' => TRUE,
   );
@@ -372,24 +369,14 @@ function member_form_delete_confirm($form, &$form_state, $member) {
 function member_form_delete_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     $member = member_load($form_state['values']['member_id']);
-    $delete = member_delete($form_state['values']['member_id']);
-    if ($delete) {
-      watchdog('member', 'Deleted member "%label" (type: @type)', array('@type' => $member->type, '%label' => entity_label('member', $member)));
-    }
+    member_delete($form_state['values']['member_id']);
+    watchdog('member', 'Deleted member "%label" (type: @type)', array('@type' => $member->type, '%label' => entity_label('member', $member)));
 
     $type = member_type_get_info($member->type);
 
-    if ($delete) {
-      drupal_set_message(
-        t('The @type %label has been deleted.', array('@type' => $type['name'], '%label' => entity_label('member', $member)))
-      );
-    }
-    else {
-      drupal_set_message(
-        t('Failed to delete the @type %label.', array('@type' => $type['name'], '%label' => entity_label('member', $member))),
-        'error'
-      );
-    }
+    drupal_set_message(
+      t('The @type %label has been deleted.', array('@type' => $type['name'], '%label' => entity_label('member', $member)))
+    );
   }
 
   if (empty($_GET['destination'])) {
