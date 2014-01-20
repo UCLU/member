@@ -3,11 +3,5 @@ description = "Provides a fieldable Member entity."
 core = 7.x
 dependencies[] = entity
 stylesheets[all][] = member.css
-
-; Files necessary for this module.
 files[] = includes/member.controller.inc
-files[] = includes/member.admin.inc
-
-; Integrations with other modules.
 files[] = migrate-destination-member.inc
-files[] = member.views.inc
