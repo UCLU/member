@@ -68,6 +68,7 @@ function member_schema() {
       'created' => array('created'),
       'status' => array('status'),
       'name' => array('name'),
+      'uid' => array('uid'),
     ),
     'unique keys' => array(
       'uuid' => array('uuid'),
