@@ -68,6 +68,7 @@ function member_schema() {
       'created' => array('created'),
       'status' => array('status'),
       'name' => array('name'),
+      'uid' => array('uid'),
     ),
     'unique keys' => array(
       'uuid' => array('uuid'),
@@ -76,4 +77,11 @@ function member_schema() {
 
   return $schema;
 
+}
+
+/**
+ * Add an index to the 'uid` column in the member table.
+ */
+function member_update_7101() {
+  db_add_index('member', 'uid', array('uid'));
 }
